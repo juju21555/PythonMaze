@@ -12,6 +12,7 @@ pygame.init()
 clock = pygame.time.Clock()
 pygame.font.init()
 font = pygame.font.SysFont('Comic Sans MS', 24)
+font1 = pygame.font.SysFont('Comic Sans MS', 18)
 
 # On initialise les listes
 
@@ -30,6 +31,7 @@ finish = False
 play = False
 replay = False
 chooseDifficult = False
+bname = False
 
 blockR = False
 running = True
@@ -43,6 +45,7 @@ regenonce = True
 
 playerloc = None
 delay = 0
+nametxt = ''
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
@@ -85,7 +88,7 @@ def string_to_maze(string):
 def save_maze(maze, score):
     date = time.asctime()
     db = open('save.csv', 'a')
-    newrow = str(maze) + ';' + str(date) + ';' + str(score) + ';' + str(((xWindow-10)/20,(yWindow-10)/20)) + '\n'
+    newrow = str(maze) + ';' + str(date) + ';' + str(score) + ';' + str(((xWindow-10)/20,(yWindow-10)/20)) + ';' + str(nametxt) + '\n'
     db.write(newrow)
     db.close()
 
@@ -99,7 +102,7 @@ def draw_csv():
         i=0
         for row in saveread:
             rect = pygame.Rect(25, (60 * i), 460, 50)
-            text = font.render( str(row[1])+'     '+str(row[2]), 1, (255,255,255) )
+            text = font1.render( str(row[1])+'     '+str(row[2]) + '        ' + str(row[4]), 1, (255,255,255) )
             pygame.draw.rect(window, [128, 128, 0], rect)
             window.blit(text, (50, (60 * i)))
             listreplay.append([row[0],row[3],rect])
@@ -169,7 +172,7 @@ while running:
 
     # De base, on se trouve sur le menu avec deux choix : Jouer un nouveau niveau ou rejouer un ancien pour battre son score
 
-    if play == False and replay == False:
+    if play == False and replay == False and bname == False:
         buttonPlay = pygame.Rect((xWindow/2-125), (yWindow/2-125), 250, 50)
         buttonReplay = pygame.Rect((xWindow/2-125), (yWindow/2-25), 250, 50)
 
@@ -182,6 +185,15 @@ while running:
         pygame.draw.rect(window, [255, 0, 0], buttonReplay)
         replaytxt = font.render('Replay',1,(255,255,255))
         window.blit(replaytxt, (215,230) )
+
+    # Afficher le surnom chosit par le joueur
+
+    if bname == True:
+        buttonEasy, buttonNormal, buttonNormal, buttonPlay, buttonReplay = [None] * 5
+        infotxt = font.render('Entrer votre nom:',1,(0,0,0))
+        window.blit(infotxt, (160,130))
+        nickname = font.render(nametxt,1,(0,0,0))
+        window.blit(nickname, (200,230))
 
     # Menu pour choisir la difficulté (Facile, Moyen, Difficile)
 
@@ -274,8 +286,19 @@ while running:
         if event.type == QUIT or(event.type == KEYUP and event.key == K_ESCAPE):    # On arrête pygame avec la touce echap
            running = False
 
-        if event.type == KEYDOWN:                         # On déplace le joueur avec les touches directionnels
-            if playerloc is not None:
+        if event.type == KEYDOWN:
+            if bname == True :
+                if event.key == 8 and nametxt != '':
+                    print(event.key)
+                    nametxt = nametxt[:-1]
+                elif event.key == 13 and len(nametxt) < 12:
+                    chooseDifficult = True
+                    bname = False
+                elif len(nametxt) < 12:
+                    nametxt = nametxt + event.dict['unicode']
+                    print(event.dict['unicode'])
+
+            if playerloc is not None:                                               # On déplace le joueur avec les touches directionnels
                 if event.key == K_UP:
                     move_up()
 
@@ -288,7 +311,7 @@ while running:
                 if event.key == K_LEFT:
                     move_left()
 
-            if event.key == K_b:
+            if event.key == K_b:                                                    # Touche B -> Touche Retour
                 play, replay, chooseDifficult, finish = [False] * 4
                 update_size_screen(25,25)
 
@@ -316,7 +339,7 @@ while running:
                     if button.collidepoint(mouse_pos):
                         size = listreplay[i][1]
                         size = size.split(',')
-                        x, y = int(float(size[0].replace('(',''))), int(float(size[1].replace(')','')))
+                        x, y = int( float( size[0].replace('(','') ) ), int( float( size[1].replace(')','') ) )
                         update_size_screen(x, y)
                         mazebase = listreplay[i][0]
                         liste = string_to_maze(mazebase)
@@ -326,8 +349,8 @@ while running:
 
             if buttonPlay is not None:
 
-                if buttonPlay.collidepoint(mouse_pos) and chooseDifficult == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
-                    chooseDifficult = True
+                if buttonPlay.collidepoint(mouse_pos) and bname == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
+                    bname = True
                     blockR = False
 
                 if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
