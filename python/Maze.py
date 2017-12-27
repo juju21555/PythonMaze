@@ -3,7 +3,7 @@
 import pygame
 import csv
 from pygame.locals import *
-import mp8_2
+import mazeGen
 import time
 
 # On initialise pygame et la police d'écriture
@@ -54,7 +54,7 @@ def update_size_screen(x, y):
     global xWindow
     global yWindow
     global window
-    liste = mp8_2.generate_labyrinthe(x,y)
+    liste = mazeGen.generate_labyrinthe(x,y)
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
@@ -237,7 +237,7 @@ while running:
             delay += 1/60
             if delay > 1.5:
                 if regenonce == True:
-                    liste = mp8_2.generate_labyrinthe(xMax,yMax)
+                    liste = mazeGen.generate_labyrinthe(xMax,yMax)
                     mazebase = maze_to_string(liste)
                     regenonce = False
                 regenonce = True
