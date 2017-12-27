@@ -15,10 +15,7 @@ font = pygame.font.SysFont('Comic Sans MS', 24)
 
 # On initialise les listes
 
-data = []
-listreplay = []
-mazes = []
-texts = []
+mazes, listreplay, mazes, texts = [[]] * 4
 
 # On initialise les fichiers images
 
@@ -47,20 +44,6 @@ regenonce = True
 playerloc = None
 delay = 0
 
-# On définit la taille de l'écran
-
-def update_size_screen(x, y):
-    global liste
-    global xWindow
-    global yWindow
-    global window
-    liste = mazeGen.generate_labyrinthe(x,y)
-    xWindow = x*20+10
-    yWindow = y*20+10
-    window = pygame.display.set_mode( (xWindow, yWindow) )
-
-update_size_screen(25,25)
-
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
 def maze_to_string(maze):
@@ -70,7 +53,18 @@ def maze_to_string(maze):
         stringfin.append(string)
     return stringfin
 
-mazebase = maze_to_string(liste)
+
+# On définit la taille de l'écran
+
+def update_size_screen(x, y):
+    global liste, xWindow, yWindow, window, mazebase
+    liste = mazeGen.generate_labyrinthe(x,y)
+    xWindow = x*20+10
+    yWindow = y*20+10
+    window = pygame.display.set_mode( (xWindow, yWindow) )
+    mazebase = maze_to_string(liste)
+
+update_size_screen(25,25)
 
 # Fonction qui transforme les labyrinthes compactés en labyrinthe pouvant être utilisé par le programme
 
@@ -91,26 +85,28 @@ def string_to_maze(string):
 def save_maze(maze, score):
     date = time.asctime()
     db = open('save.csv', 'a')
-    newrow = str(maze) + ';' + str(date) + ';' + str(score) +  '\n'
+    newrow = str(maze) + ';' + str(date) + ';' + str(score) + ';' + str(((xWindow-10)/20,(yWindow-10)/20)) + '\n'
     db.write(newrow)
     db.close()
 
 # Fonction qui affiche les sauvegardes précédentes sous formes de boutons (pour rejouer)
 
 def draw_csv():
-    global data
-    global listreplay
+    global listreplay, buttonPlay, buttonReplay
+    listreplay.clear()
     with open('save.csv') as save:
         saveread = csv.reader(save, delimiter=';')
+        i=0
         for row in saveread:
-            data.append([row[1],row[2]])
-            mazes.append(row[0])
-        for i in range(0,10):
-            if i < len(data):
-                rect = pygame.Rect(25, (60 * i), 460, 50)
-                listreplay.append(rect)
-                text = font.render( str(data[i][0])+'     '+str(data[i][1]), 1, (255,255,255) )
-                texts.append(text)
+            rect = pygame.Rect(25, (60 * i), 460, 50)
+            text = font.render( str(row[1])+'     '+str(row[2]), 1, (255,255,255) )
+            pygame.draw.rect(window, [128, 128, 0], rect)
+            window.blit(text, (50, (60 * i)))
+            listreplay.append([row[0],row[3],rect])
+            i+=1
+    buttonPlay, buttonReplay = [None] * 2
+
+
 
 # Fonction pour se déplacer en haut
 
@@ -169,7 +165,7 @@ while running:
 
     # On définit le taux de rafraichissement de l'affichage sur 60 Hz et on remplit le fond d'une couleur blanche
     clock.tick(60)
-    window.fill( (255,255,255) )
+    window.fill((255,255,255))
 
     # De base, on se trouve sur le menu avec deux choix : Jouer un nouveau niveau ou rejouer un ancien pour battre son score
 
@@ -246,13 +242,8 @@ while running:
         if not keys[K_r]:
             delay = 0
 
-    # Si on choisit de rejouer on génère un menu pour choisir un niveau à rejouer
-
     if replay == True:
-        for i in range(len(listreplay)):
-            button = listreplay[i]
-            pygame.draw.rect(window, [128, 128, 0], button)
-            window.blit(texts[i], (50, (60 * i)))
+        draw_csv()
 
     # Si on a finit le niveau
 
@@ -283,22 +274,23 @@ while running:
         if event.type == QUIT or(event.type == KEYUP and event.key == K_ESCAPE):    # On arrête pygame avec la touce echap
            running = False
 
-        if event.type == KEYDOWN and playerloc is not None:                         # On déplace le joueur avec les touches directionnels
-            if event.key == K_UP:
-                move_up()
+        if event.type == KEYDOWN:                         # On déplace le joueur avec les touches directionnels
+            if playerloc is not None:
+                if event.key == K_UP:
+                    move_up()
 
-            if event.key == K_DOWN:
-                move_down()
+                if event.key == K_DOWN:
+                    move_down()
 
-            if event.key == K_RIGHT:
-                move_right()
+                if event.key == K_RIGHT:
+                    move_right()
 
-            if event.key == K_LEFT:
-                move_left()
+                if event.key == K_LEFT:
+                    move_left()
 
             if event.key == K_b:
-                update_size_screen(25,25)
                 play, replay, chooseDifficult, finish = [False] * 4
+                update_size_screen(25,25)
 
 
         if event.type == pygame.MOUSEBUTTONDOWN:                                    # On gère les actions avec la souris
@@ -315,26 +307,31 @@ while running:
                     play = True
 
                 if buttonHard.collidepoint(mouse_pos):
-                    update_size_screen(50,50)
+                    update_size_screen(60,30)
                     play = True
 
             elif replay == True:                                                    # Si on est dans le menu replay on vérifie sur quel bouton se situe la souris pour génerer le labyrinthe correspondant
                 for i in range(1,len(listreplay)):
-                    button = listreplay[i]
+                    button = listreplay[i][2]
                     if button.collidepoint(mouse_pos):
-                        mazebase = mazes[i]
+                        size = listreplay[i][1]
+                        size = size.split(',')
+                        x, y = int(float(size[0].replace('(',''))), int(float(size[1].replace(')','')))
+                        update_size_screen(x, y)
+                        mazebase = listreplay[i][0]
                         liste = string_to_maze(mazebase)
                         play = True
                         replay = False
                         blockR = True
 
-            if buttonPlay.collidepoint(mouse_pos) and chooseDifficult == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
-                chooseDifficult = True
-                blockR = False
+            if buttonPlay is not None:
 
-            if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
-                draw_csv()
-                replay = True
+                if buttonPlay.collidepoint(mouse_pos) and chooseDifficult == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
+                    chooseDifficult = True
+                    blockR = False
+
+                if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
+                    replay = True
 
 
 # Quand on quitte la boucle on éteint pygame
