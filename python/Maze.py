@@ -88,7 +88,7 @@ def string_to_maze(string):
 def save_maze(maze, score):
     date = time.asctime()
     db = open('save.csv', 'a')
-    newrow = str(maze) + ';' + str(date) + ';' + str(score) + ';' + str(((xWindow-10)/20,(yWindow-10)/20)) + ';' + str(nametxt) + '\n'
+    newrow = str(maze) + ';' + str(date) + ';' + str(score) + 's;' + str(((xWindow-10)/20,(yWindow-10)/20)) + ';' + str(nametxt) + '\n'
     db.write(newrow)
     db.close()
 
@@ -116,7 +116,7 @@ def draw_csv():
 def move_up():
     global liste
     global finish
-    if y-1 >= 0:                        #On vérifie si la futur position existe
+    if y-1 >= 0:
         if liste[y-1][x] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 1
             liste[y-1][x] = 2
@@ -128,7 +128,7 @@ def move_up():
 def move_down():
     global liste
     global finish
-    if y+1 < (yWindow / 10):            #On vérifie si la futur position existe
+    if y+1 < yWindow / 10:
         if liste[y+1][x] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 1
             liste[y+1][x] = 2
@@ -140,7 +140,7 @@ def move_down():
 def move_right():
     global liste
     global finish
-    if x+1 < (xWindow / 10):            #On vérifie si la futur position existe
+    if x+1 < xWindow / 10:
         if liste[y][x+1] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 1
             liste[y][x+1] = 2
@@ -152,7 +152,7 @@ def move_right():
 def move_left():
     global liste
     global finish
-    if x-1 >= 0:                        #On vérifie si la futur position existe
+    if x-1 >= 0:
         if liste[y][x-1] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 1
             liste[y][x-1] = 2
@@ -287,9 +287,8 @@ while running:
            running = False
 
         if event.type == KEYDOWN:
-            if bname == True :
+            if bname == True :                                                      # Ecrire le nom du joueur
                 if event.key == 8 and nametxt != '':
-                    print(event.key)
                     nametxt = nametxt[:-1]
                 elif event.key == 13 and len(nametxt) < 12:
                     chooseDifficult = True
