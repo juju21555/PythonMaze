@@ -59,13 +59,16 @@ def maze_to_string(maze):
 
 # On définit la taille de l'écran
 
-def update_size_screen(x, y):
+def update_size_screen(x, y, maze = None):
     global liste, xWindow, yWindow, window, mazebase
     liste = mazeGen.generate_labyrinthe(x,y)
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
-    mazebase = maze_to_string(liste)
+    if maze is not None:
+        mazebase = maze
+    else:
+        mazebase = maze_to_string(liste)
 
 update_size_screen(25,25)
 
@@ -86,11 +89,30 @@ def string_to_maze(string):
 # Fonction qui sauvegarde le labyrinthe compacté dans le fichier 'save.csv'
 
 def save_maze(maze, score):
+    array = []
     date = time.asctime()
-    db = open('save.csv', 'a')
-    newrow = str(maze) + ';' + str(date) + ';' + str(score) + 's;' + str(((xWindow-10)/20,(yWindow-10)/20)) + ';' + str(nametxt) + '\n'
-    db.write(newrow)
-    db.close()
+    with open('save.csv') as csvfile:
+        fieldnames = ['maze','date','highscore','size','nickname','essais']
+        reader = csv.DictReader(csvfile, delimiter=';')
+        newrow = {'maze':str(maze), 'date':str(date), 'highscore':str(score)+'s', 'size':str(((xWindow-10)/20,(yWindow-10)/20)),'nickname':str(nametxt),'essais':'1'}
+        for row in reader:
+            if row['maze'] == 'maze':
+                continue
+            if row['maze'] == str(maze):
+                row['date'] = str(date)
+                row['highscore'] = str(score)+'s'
+                row['essais'] = str(int(row['essais']) + 1)
+                newrow = None
+            array.append(row)
+        if newrow is not None:
+            array.append(newrow)
+    with open('save.csv','w+') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
+        writer.writeheader()
+        for row in array:
+            writer.writerow(row)
+    csvfile.close()
+
 
 # Fonction qui affiche les sauvegardes précédentes sous formes de boutons (pour rejouer)
 
@@ -101,12 +123,17 @@ def draw_csv():
         saveread = csv.reader(save, delimiter=';')
         i=0
         for row in saveread:
-            rect = pygame.Rect(25, (60 * i), 460, 50)
-            text = font1.render( str(row[1])+'     '+str(row[2]) + '        ' + str(row[4]), 1, (255,255,255) )
-            pygame.draw.rect(window, [128, 128, 0], rect)
-            window.blit(text, (50, (60 * i)))
-            listreplay.append([row[0],row[3],rect])
-            i+=1
+            if row != []:
+                rect = pygame.Rect(25, (60 * i), 460, 50)
+                if i == 0:
+                    space = '                          '
+                else:
+                    space = '   '
+                text = font1.render( str(row[1])+ space +str(row[2]) + '    ' + str(row[4]) + '    ' + str(row[5]), 1, (255,255,255) )
+                pygame.draw.rect(window, [128, 128, 0], rect)
+                window.blit(text, (50, (60 * i)))
+                listreplay.append([row[0],row[3],rect])
+                i+=1
     buttonPlay, buttonReplay = [None] * 2
 
 
@@ -158,8 +185,6 @@ def move_left():
             liste[y][x-1] = 2
         elif liste[y][x-1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
-
-
 
 # On lance une boucle qui modifiera l'affichage pygame
 
@@ -272,7 +297,7 @@ while running:
 
         window.fill(0)                                                          # On efface l'affichage sur l'écran
         play, replay, finish, chooseDifficult = [False] * 4                     # On remet les variables à faux
-        update_size_screen(25,25)                                               # On remet la taille de l'écran à la normale
+        update_size_screen(25,25,mazebase)                                      # On remet la taille de l'écran à la normale
 
 
     pygame.display.flip()                       # On affiche les textures mis en mémoire
@@ -287,7 +312,7 @@ while running:
            running = False
 
         if event.type == KEYDOWN:
-            if bname == True :                                                      # Ecrire le nom du joueur
+            if bname == True:                                                       # Ecrire le nom du joueur
                 if event.key == 8 and nametxt != '':
                     nametxt = nametxt[:-1]
                 elif event.key == 13 and len(nametxt) < 12:
@@ -295,7 +320,6 @@ while running:
                     bname = False
                 elif len(nametxt) < 12:
                     nametxt = nametxt + event.dict['unicode']
-                    print(event.dict['unicode'])
 
             if playerloc is not None:                                               # On déplace le joueur avec les touches directionnels
                 if event.key == K_UP:
@@ -339,18 +363,20 @@ while running:
                         size = listreplay[i][1]
                         size = size.split(',')
                         x, y = int( float( size[0].replace('(','') ) ), int( float( size[1].replace(')','') ) )
-                        update_size_screen(x, y)
                         mazebase = listreplay[i][0]
+                        update_size_screen(x, y, mazebase)
                         liste = string_to_maze(mazebase)
                         play = True
                         replay = False
                         blockR = True
+                        saveonce = True
 
             if buttonPlay is not None:
 
                 if buttonPlay.collidepoint(mouse_pos) and bname == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
                     bname = True
                     blockR = False
+                    saveonce = True
 
                 if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
                     replay = True
