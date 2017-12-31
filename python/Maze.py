@@ -4,6 +4,7 @@ import pygame
 import csv
 from pygame.locals import *
 import mazeGen
+import mazeGen2
 import time
 
 # On initialise pygame et la police d'écriture
@@ -30,8 +31,7 @@ end = pygame.image.load("end.png")
 finish = False
 play = False
 replay = False
-chooseDifficult = False
-bname = False
+settings = False
 
 blockR = False
 running = True
@@ -46,6 +46,14 @@ regenonce = True
 playerloc = None
 delay = 0
 nametxt = ''
+genTexts = ['Fusion aléatoire','Exploration exhaustive']
+genText = 'Exploration exhaustive'
+gen = 1
+difficultTexts = ['Easy','Normal','Hard']
+difficultText = 'Normal'
+difficult = 1
+sizeDiff = [(10,10),(25,25),(60,40)]
+xDiff, yDiff = 25,25
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
@@ -61,7 +69,10 @@ def maze_to_string(maze):
 
 def update_size_screen(x, y, maze = None):
     global liste, xWindow, yWindow, window, mazebase
-    liste = mazeGen.generate_labyrinthe(x,y)
+    if gen == 0:
+        liste = mazeGen2.generate_labyrinthe(x,y)
+    elif gen == 1:
+        liste = mazeGen.generate_labyrinthe(x,y)
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
@@ -125,17 +136,55 @@ def draw_csv():
         for row in saveread:
             if row != []:
                 rect = pygame.Rect(25, (60 * i), 460, 50)
-                if i == 0:
-                    space = '                          '
-                else:
-                    space = '   '
-                text = font1.render( str(row[1])+ space +str(row[2]) + '    ' + str(row[4]) + '    ' + str(row[5]), 1, (255,255,255) )
                 pygame.draw.rect(window, [128, 128, 0], rect)
-                window.blit(text, (50, (60 * i)))
+
+                textdate = font1.render( str(row[1]), 1, (255,255,255) )
+                textscore = font1.render( str(row[2]), 1, (255,255,255) )
+                textname = font1.render( str(row[4]), 1, (255,255,255) )
+                textessais = font1.render( str(row[5]), 1, (255,255,255) )
+
+                window.blit(textdate, (35, (60 * i)))
+                window.blit(textscore, (260, (60 * i)))
+                window.blit(textname, (350, (60 * i)))
+                window.blit(textessais, (430, (60 * i)+20))
+
                 listreplay.append([row[0],row[3],rect])
                 i+=1
     buttonPlay, buttonReplay = [None] * 2
 
+# Fonction qui définit la difficulté du jeu
+
+def set_difficult(i):
+    global difficultText, difficult, xDiff, yDiff
+    if difficult == len(difficultTexts)-1 and i == 1:
+        difficult = 0
+        difficultText = difficultTexts[difficult]
+
+    elif difficult == 0 and i == -1:
+        difficult = len(difficultTexts)-1
+        difficultText = difficultTexts[difficult]
+
+    else:
+        difficult += i
+        difficultText = difficultTexts[difficult]
+
+    (xDiff, yDiff) = sizeDiff[difficult]
+
+# Fonction qui définit le type de génération du labyrinthe
+
+def set_gen(i):
+    global genText, gen
+    if gen == len(genTexts)-1 and i == 1:
+        gen = 0
+        genText = genTexts[gen]
+
+    elif gen == 0 and i == -1:
+        gen = len(genTexts)-1
+        genText = genTexts[gen]
+
+    else:
+        gen += i
+        genText = genTexts[gen]
 
 
 # Fonction pour se déplacer en haut
@@ -197,7 +246,7 @@ while running:
 
     # De base, on se trouve sur le menu avec deux choix : Jouer un nouveau niveau ou rejouer un ancien pour battre son score
 
-    if play == False and replay == False and bname == False:
+    if play == False and replay == False and settings == False:
         buttonPlay = pygame.Rect((xWindow/2-125), (yWindow/2-125), 250, 50)
         buttonReplay = pygame.Rect((xWindow/2-125), (yWindow/2-25), 250, 50)
 
@@ -211,35 +260,47 @@ while running:
         replaytxt = font.render('Replay',1,(255,255,255))
         window.blit(replaytxt, (215,230) )
 
-    # Afficher le surnom chosit par le joueur
+    # Menu pour choisir la difficulté (Facile, Moyen, Difficile)
 
-    if bname == True:
-        buttonEasy, buttonNormal, buttonNormal, buttonPlay, buttonReplay = [None] * 5
+    if settings == True:
+        buttonPlay, buttonReplay = [None] * 2
         infotxt = font.render('Entrer votre nom:',1,(0,0,0))
         window.blit(infotxt, (160,130))
         nickname = font.render(nametxt,1,(0,0,0))
-        window.blit(nickname, (200,230))
+        window.blit(nickname, (200,160))
 
-    # Menu pour choisir la difficulté (Facile, Moyen, Difficile)
-
-    if chooseDifficult == True:
-        buttonEasy = pygame.Rect((xWindow/2-125), (yWindow/2-125), 250, 50)
+        buttonSwitchL = pygame.Rect((xWindow/2-200), (yWindow/2-25), 50, 50)
         buttonNormal = pygame.Rect((xWindow/2-125), (yWindow/2-25), 250, 50)
-        buttonHard = pygame.Rect((xWindow/2-125), (yWindow/2+75), 250, 50)
+        buttonSwitchR = pygame.Rect((xWindow/2+150), (yWindow/2-25), 50, 50)
 
-        buttonPlay, buttonReplay = [None] * 2
-
-        pygame.draw.rect(window, [255, 0, 0], buttonEasy)
-        easytxt = font.render('Easy',1,(255,255,255))
-        window.blit(easytxt, (230,130) )
+        pygame.draw.rect(window, [255, 0, 0], buttonSwitchL)
+        easytxt = font.render('<',1,(255,255,255))
+        window.blit(easytxt, (75,235) )
 
         pygame.draw.rect(window, [255, 0, 0], buttonNormal)
-        normaltxt = font.render('Normal',1,(255,255,255))
+        normaltxt = font.render(difficultText,1,(255,255,255))
         window.blit(normaltxt, (215,230) )
 
-        pygame.draw.rect(window, [255, 0, 0], buttonHard)
-        hardtxt = font.render('Hard',1,(255,255,255))
-        window.blit(hardtxt, (230,330) )
+        pygame.draw.rect(window, [255, 0, 0], buttonSwitchR)
+        hardtxt = font.render('>',1,(255,255,255))
+        window.blit(hardtxt, (425,235) )
+
+
+        buttonL = pygame.Rect((xWindow/2-200), (yWindow/2+75), 50, 50)
+        buttonGeneration = pygame.Rect((xWindow/2-130), (yWindow/2+75), 260, 50)
+        buttonR = pygame.Rect((xWindow/2+150), (yWindow/2+75), 50, 50)
+
+        pygame.draw.rect(window, [255, 0, 0], buttonL)
+        ltxt = font.render('<',1,(255,255,255))
+        window.blit(ltxt, (75,335) )
+
+        pygame.draw.rect(window, [255, 0, 0], buttonGeneration)
+        gentxt = font.render(genText,1,(255,255,255))
+        window.blit(gentxt, (130,335) )
+
+        pygame.draw.rect(window, [255, 0, 0], buttonR)
+        rtxt = font.render('>',1,(255,255,255))
+        window.blit(rtxt, (425,335) )
 
 
     # Si on choisit de jouer
@@ -270,8 +331,9 @@ while running:
             delay += 1/60
             if delay > 1.5:
                 if regenonce == True:
-                    liste = mazeGen.generate_labyrinthe(xMax,yMax)
+                    liste = mazeGen2.generate_labyrinthe( int((xWindow-10)/20), int((yWindow-10)/20) )
                     mazebase = maze_to_string(liste)
+                    t0 = time.monotonic()
                     regenonce = False
                 regenonce = True
                 delay = 0
@@ -296,11 +358,12 @@ while running:
             saveonce = False
 
         window.fill(0)                                                          # On efface l'affichage sur l'écran
-        play, replay, finish, chooseDifficult = [False] * 4                     # On remet les variables à faux
+        play, replay, finish, settings = [False] * 4                     # On remet les variables à faux
         update_size_screen(25,25,mazebase)                                      # On remet la taille de l'écran à la normale
 
 
     pygame.display.flip()                       # On affiche les textures mis en mémoire
+    pygame.display.update()
 
     # Ici, on gère les touches pressées
 
@@ -312,13 +375,10 @@ while running:
            running = False
 
         if event.type == KEYDOWN:
-            if bname == True:                                                       # Ecrire le nom du joueur
+            if settings == True:                                                       # Ecrire le nom du joueur
                 if event.key == 8 and nametxt != '':
                     nametxt = nametxt[:-1]
-                elif event.key == 13 and len(nametxt) < 12:
-                    chooseDifficult = True
-                    bname = False
-                elif len(nametxt) < 12:
+                elif len(nametxt) < 9:
                     nametxt = nametxt + event.dict['unicode']
 
             if playerloc is not None:                                               # On déplace le joueur avec les touches directionnels
@@ -335,7 +395,7 @@ while running:
                     move_left()
 
             if event.key == K_b:                                                    # Touche B -> Touche Retour
-                play, replay, chooseDifficult, finish = [False] * 4
+                play, replay, settings, finish = [False] * 4
                 update_size_screen(25,25)
 
 
@@ -343,18 +403,22 @@ while running:
 
             mouse_pos = pygame.mouse.get_pos()                                      # On récupère la position de la souris
 
-            if chooseDifficult == True:
-                if buttonEasy.collidepoint(mouse_pos):
-                    update_size_screen(10,10)
-                    play = True
+            if settings == True:
+                if buttonSwitchL.collidepoint(mouse_pos):
+                    set_difficult(-1)
 
                 if buttonNormal.collidepoint(mouse_pos):
-                    update_size_screen(25,25)
+                    update_size_screen(xDiff,yDiff)
                     play = True
 
-                if buttonHard.collidepoint(mouse_pos):
-                    update_size_screen(60,30)
-                    play = True
+                if buttonSwitchR.collidepoint(mouse_pos):
+                    set_difficult(1)
+
+                if buttonL.collidepoint(mouse_pos):
+                    set_gen(-1)
+
+                if buttonR.collidepoint(mouse_pos):
+                    set_gen(1)
 
             elif replay == True:                                                    # Si on est dans le menu replay on vérifie sur quel bouton se situe la souris pour génerer le labyrinthe correspondant
                 for i in range(1,len(listreplay)):
@@ -373,8 +437,8 @@ while running:
 
             if buttonPlay is not None:
 
-                if buttonPlay.collidepoint(mouse_pos) and bname == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
-                    bname = True
+                if buttonPlay.collidepoint(mouse_pos) and settings == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
+                    settings = True
                     blockR = False
                     saveonce = True
 
