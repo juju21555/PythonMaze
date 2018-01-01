@@ -11,8 +11,6 @@ def generate_labyrinthe(xMax, yMax):
     directionX = {'N':0,'S':0,'E':1,'O':-1}
     directionY = {'N':1,'S':-1,'E':0,'O':0}
 
-    labyrintheComplet = []
-
     labyrinthe = [[(x+xMax*y) for x in range(xMax)] for y in range(yMax)]
 
     murs = [[0 for x in range(2*xMax+1)] for y in range(2*yMax+1)]
@@ -59,10 +57,5 @@ def generate_labyrinthe(xMax, yMax):
     murs[start[1]][start[0]] = 2
     murs[end[1]][end[0]] = 3
 
-    return(murs)
-
-
-
-
-
+    return murs
 

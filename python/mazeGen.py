@@ -1,6 +1,4 @@
 ﻿import random
-import csv
-import time
 
 def breakWall(x1,y1,x2,y2):
     milieu = [ x1+x2+1, y1+y2+1 ]
@@ -12,8 +10,6 @@ def generate_labyrinthe(xMax, yMax):
 
     directionX = {'N':0,'S':0,'E':1,'O':-1}
     directionY = {'N':1,'S':-1,'E':0,'O':0}
-
-    labyrintheComplet = []
 
     labyrinthe = [[0 for x in range(xMax)] for y in range(yMax)]
 
@@ -68,10 +64,4 @@ def generate_labyrinthe(xMax, yMax):
     murs[end[1]][end[0]] = 3
 
     return murs
-
-
-
-
-
-
 

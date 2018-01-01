@@ -19,27 +19,10 @@ font1 = pygame.font.SysFont('Comic Sans MS', 18)
 
 mazes, listreplay, mazes, texts = [[]] * 4
 
-# On initialise les fichiers images
-
-wall = pygame.image.load("mur.png")
-empty = pygame.image.load("empty.png")
-player = pygame.image.load("start.png")
-end = pygame.image.load("end.png")
-
 # On initialise les variables booléennes
 
-finish = False
-play = False
-replay = False
-settings = False
-
-blockR = False
-running = True
-
-t0once = True
-t1once = True
-saveonce = True
-regenonce = True
+finish, play, replay, settings, blockR = [False] * 5
+t0once, t1once, saveonce, regenonce, running = [True] * 5
 
 # Autres variables
 
@@ -52,7 +35,7 @@ gen = 1
 difficultTexts = ['Easy','Normal','Hard']
 difficultText = 'Normal'
 difficult = 1
-sizeDiff = [(10,10),(25,25),(60,40)]
+sizeDiff = [(10,10),(25,25),(60,30)]
 xDiff, yDiff = 25,25
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
@@ -132,24 +115,33 @@ def draw_csv():
     listreplay.clear()
     with open('save.csv') as save:
         saveread = csv.reader(save, delimiter=';')
+        r = []
         i=0
+
         for row in saveread:
-            if row != []:
-                rect = pygame.Rect(25, (60 * i), 460, 50)
-                pygame.draw.rect(window, [128, 128, 0], rect)
+            if row != [] and row[0] != 'maze':
+                r.append(row)
 
-                textdate = font1.render( str(row[1]), 1, (255,255,255) )
-                textscore = font1.render( str(row[2]), 1, (255,255,255) )
-                textname = font1.render( str(row[4]), 1, (255,255,255) )
-                textessais = font1.render( str(row[5]), 1, (255,255,255) )
+        r.append(['maze', 'date', 'highscore', 'size', 'nickname', 'essais'])
+        reader = r.reverse()
 
-                window.blit(textdate, (35, (60 * i)))
-                window.blit(textscore, (260, (60 * i)))
-                window.blit(textname, (350, (60 * i)))
-                window.blit(textessais, (430, (60 * i)+20))
+        for row in r:
+            rect = pygame.Rect(25, (60 * i), 460, 50)
+            pygame.draw.rect(window, [128, 128, 0], rect)
 
-                listreplay.append([row[0],row[3],rect])
-                i+=1
+            textdate = font1.render( str(row[1]), 1, (255,255,255) )
+            textscore = font1.render( str(row[2]), 1, (255,255,255) )
+            textname = font1.render( str(row[4]), 1, (255,255,255) )
+            textessais = font1.render( str(row[5]), 1, (255,255,255) )
+
+            window.blit(textdate, (35, (60 * i)))
+            window.blit(textscore, (260, (60 * i)))
+            window.blit(textname, (350, (60 * i)))
+            window.blit(textessais, (430, (60 * i)+20))
+
+            listreplay.append([row[0],row[3],rect])
+            i+=1
+
     buttonPlay, buttonReplay = [None] * 2
 
 # Fonction qui définit la difficulté du jeu
@@ -193,8 +185,8 @@ def move_up():
     global liste
     global finish
     if y-1 >= 0:
-        if liste[y-1][x] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 1
+        if liste[y-1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
+            liste[y][x] = 4
             liste[y-1][x] = 2
         elif liste[y-1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
@@ -205,8 +197,8 @@ def move_down():
     global liste
     global finish
     if y+1 < yWindow / 10:
-        if liste[y+1][x] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 1
+        if liste[y+1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
+            liste[y][x] = 4
             liste[y+1][x] = 2
         elif liste[y+1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
@@ -217,8 +209,8 @@ def move_right():
     global liste
     global finish
     if x+1 < xWindow / 10:
-        if liste[y][x+1] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 1
+        if liste[y][x+1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
+            liste[y][x] = 4
             liste[y][x+1] = 2
         elif liste[y][x+1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
@@ -229,8 +221,8 @@ def move_left():
     global liste
     global finish
     if x-1 >= 0:
-        if liste[y][x-1] == 1:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 1
+        if liste[y][x-1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
+            liste[y][x] = 4
             liste[y][x-1] = 2
         elif liste[y][x-1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
@@ -238,7 +230,6 @@ def move_left():
 # On lance une boucle qui modifiera l'affichage pygame
 
 while running:
-
 
     # On définit le taux de rafraichissement de l'affichage sur 60 Hz et on remplit le fond d'une couleur blanche
     clock.tick(60)
@@ -314,14 +305,25 @@ while running:
             for x in range(len(liste[y])):
                 if liste[y][x] == 2:
                     playerloc = (x, y)
-                    e = player
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (0,128,0), rect)
+
                 elif liste[y][x] == 3:
-                    e = end
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (255,0,0), rect)
+
                 elif liste[y][x] == 0:
-                    e = wall
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
+
                 elif liste[y][x] == 1:
-                    e = empty
-                window.blit( e, (x*10,y*10) )
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (255,255,255), rect)
+
+                elif liste[y][x] == 4:
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (128,0,128), rect)
+
 
     # Fonction pour génerer un nouveau labyrinthe en maintenant la touche R
 
@@ -430,17 +432,14 @@ while running:
                         mazebase = listreplay[i][0]
                         update_size_screen(x, y, mazebase)
                         liste = string_to_maze(mazebase)
-                        play = True
+                        play, blockR, saveonce, t0once, t1once = [True] * 5
                         replay = False
-                        blockR = True
-                        saveonce = True
 
             if buttonPlay is not None:
 
                 if buttonPlay.collidepoint(mouse_pos) and settings == False:              # Si on est dans le menu et qu'on clique sur le bouton play on met la variable play à Vrai
-                    settings = True
+                    settings, saveonce, t0once, t1once = [True] * 4
                     blockR = False
-                    saveonce = True
 
                 if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
                     replay = True
