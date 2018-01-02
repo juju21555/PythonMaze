@@ -21,7 +21,7 @@ mazes, listreplay, mazes, texts = [[]] * 4
 
 # On initialise les variables booléennes
 
-finish, play, replay, settings, blockR = [False] * 5
+finish, play, replay, settings, blockR, tracer = [False] * 6
 t0once, t1once, saveonce, regenonce, running = [True] * 5
 
 # Autres variables
@@ -37,6 +37,7 @@ difficultText = 'Normal'
 difficult = 1
 sizeDiff = [(10,10),(25,25),(60,30)]
 xDiff, yDiff = 25,25
+colorTrB = (255, 0, 0)
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
@@ -251,47 +252,61 @@ while running:
         replaytxt = font.render('Replay',1,(255,255,255))
         window.blit(replaytxt, (215,230) )
 
-    # Menu pour choisir la difficulté (Facile, Moyen, Difficile)
+    # Menu pour choisir un surnom, choisir la difficulté, choisir le type de génération et si on laisse une trace derriere le joueur
 
     if settings == True:
         buttonPlay, buttonReplay = [None] * 2
         infotxt = font.render('Entrer votre nom:',1,(0,0,0))
-        window.blit(infotxt, (160,130))
+        window.blit(infotxt, (160,50))
         nickname = font.render(nametxt,1,(0,0,0))
-        window.blit(nickname, (200,160))
+        window.blit(nickname, (200,80))
 
-        buttonSwitchL = pygame.Rect((xWindow/2-200), (yWindow/2-25), 50, 50)
-        buttonNormal = pygame.Rect((xWindow/2-125), (yWindow/2-25), 250, 50)
-        buttonSwitchR = pygame.Rect((xWindow/2+150), (yWindow/2-25), 50, 50)
+        buttonSwitchL = pygame.Rect((xWindow/2-200), (yWindow/2-125), 50, 50)
+        buttonNormal = pygame.Rect((xWindow/2-125), (yWindow/2-125), 250, 50)
+        buttonSwitchR = pygame.Rect((xWindow/2+150), (yWindow/2-125), 50, 50)
 
         pygame.draw.rect(window, [255, 0, 0], buttonSwitchL)
         easytxt = font.render('<',1,(255,255,255))
-        window.blit(easytxt, (75,235) )
+        window.blit(easytxt, (75,135) )
 
         pygame.draw.rect(window, [255, 0, 0], buttonNormal)
         normaltxt = font.render(difficultText,1,(255,255,255))
-        window.blit(normaltxt, (215,230) )
+        window.blit(normaltxt, (215,135) )
 
         pygame.draw.rect(window, [255, 0, 0], buttonSwitchR)
         hardtxt = font.render('>',1,(255,255,255))
-        window.blit(hardtxt, (425,235) )
+        window.blit(hardtxt, (425,135) )
 
 
-        buttonL = pygame.Rect((xWindow/2-200), (yWindow/2+75), 50, 50)
-        buttonGeneration = pygame.Rect((xWindow/2-130), (yWindow/2+75), 260, 50)
-        buttonR = pygame.Rect((xWindow/2+150), (yWindow/2+75), 50, 50)
+        buttonL = pygame.Rect((xWindow/2-200), (yWindow/2-50), 50, 50)
+        buttonGeneration = pygame.Rect((xWindow/2-130), (yWindow/2-50), 260, 50)
+        buttonR = pygame.Rect((xWindow/2+150), (yWindow/2-50), 50, 50)
 
         pygame.draw.rect(window, [255, 0, 0], buttonL)
         ltxt = font.render('<',1,(255,255,255))
-        window.blit(ltxt, (75,335) )
+        window.blit(ltxt, (75,210) )
 
         pygame.draw.rect(window, [255, 0, 0], buttonGeneration)
         gentxt = font.render(genText,1,(255,255,255))
-        window.blit(gentxt, (130,335) )
+        window.blit(gentxt, (130,210) )
 
         pygame.draw.rect(window, [255, 0, 0], buttonR)
         rtxt = font.render('>',1,(255,255,255))
-        window.blit(rtxt, (425,335) )
+        window.blit(rtxt, (425,210) )
+
+        buttonTrace = pygame.Rect((xWindow/2-110), (yWindow/2+25), 160, 50)
+        buttonTraceB = pygame.Rect((xWindow/2+60), (yWindow/2+25), 50, 50)
+
+        pygame.draw.rect(window, [255, 0, 0], buttonTrace)
+        tracetxt = font.render('Tracer ?',1,(255,255,255))
+        window.blit(tracetxt, (170,285) )
+
+        pygame.draw.rect(window, colorTrB, buttonTraceB)
+
+        buttonStart = pygame.Rect((xWindow/2-75), (yWindow/2+100), 150, 50)
+        pygame.draw.rect(window, [255, 0, 0], buttonStart)
+        starttxt = font.render('Start',1,(255,255,255))
+        window.blit(starttxt, (225,360) )
 
 
     # Si on choisit de jouer
@@ -316,11 +331,11 @@ while running:
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (0,0,0), rect)
 
-                elif liste[y][x] == 1:
+                elif liste[y][x] == 1 or (liste[y][x] == 4 and tracer == False):
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (255,255,255), rect)
 
-                elif liste[y][x] == 4:
+                elif liste[y][x] == 4 and tracer == True:
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (128,0,128), rect)
 
@@ -333,8 +348,7 @@ while running:
             delay += 1/60
             if delay > 1.5:
                 if regenonce == True:
-                    liste = mazeGen2.generate_labyrinthe( int((xWindow-10)/20), int((yWindow-10)/20) )
-                    mazebase = maze_to_string(liste)
+                    update_size_screen( int((xWindow-10)/20), int((yWindow-10)/20) )
                     t0 = time.monotonic()
                     regenonce = False
                 regenonce = True
@@ -397,7 +411,7 @@ while running:
                     move_left()
 
             if event.key == K_b:                                                    # Touche B -> Touche Retour
-                play, replay, settings, finish = [False] * 4
+                play, replay, settings, finish, tracer = [False] * 5
                 update_size_screen(25,25)
 
 
@@ -409,9 +423,11 @@ while running:
                 if buttonSwitchL.collidepoint(mouse_pos):
                     set_difficult(-1)
 
-                if buttonNormal.collidepoint(mouse_pos):
+                if buttonStart.collidepoint(mouse_pos):
                     update_size_screen(xDiff,yDiff)
                     play = True
+                    settings = False
+                    nametxt = ''
 
                 if buttonSwitchR.collidepoint(mouse_pos):
                     set_difficult(1)
@@ -421,6 +437,14 @@ while running:
 
                 if buttonR.collidepoint(mouse_pos):
                     set_gen(1)
+
+                if buttonTraceB.collidepoint(mouse_pos):
+                    if colorTrB == (255,0,0):
+                        colorTrB = (0,255,0)
+                        tracer = True
+                    else:
+                        colorTrB = (255,0,0)
+                        tracer = False
 
             elif replay == True:                                                    # Si on est dans le menu replay on vérifie sur quel bouton se situe la souris pour génerer le labyrinthe correspondant
                 for i in range(1,len(listreplay)):
@@ -443,7 +467,6 @@ while running:
 
                 if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
                     replay = True
-
 
 # Quand on quitte la boucle on éteint pygame
 

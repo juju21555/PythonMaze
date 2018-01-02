@@ -3,17 +3,21 @@ from pygame.locals import *
 import mazeGen
 import mazeGen2
 import random
+import time
 
 pygame.init()
 clock = pygame.time.Clock()
 
-gen = 0
+gen = 1
 
 directionX = {'N':0,'S':0,'E':1,'O':-1}
 directionY = {'N':1,'S':-1,'E':0,'O':0}
 
 running = True
 endalgo = False
+
+regenonce = True
+delay = 0
 
 def update_size_screen(x, y, maze = None):
     global liste, xWindow, yWindow, window, mazebase
@@ -25,7 +29,7 @@ def update_size_screen(x, y, maze = None):
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
 
-update_size_screen(25,25)
+update_size_screen(60,30)
 
 
 while running:
@@ -33,6 +37,27 @@ while running:
     # On définit le taux de rafraichissement de l'affichage sur 60 Hz et on remplit le fond d'une couleur blanche
     clock.tick(60)
     window.fill((255,255,255))
+
+    keys = pygame.key.get_pressed()
+    if keys[K_r]:
+        delay += 1/60
+        if delay > 1.5:
+            if regenonce == True:
+                update_size_screen(60,30)
+                regenonce = False
+                endalgo = False
+                time.sleep(0.1)
+            regenonce = True
+            delay = 0
+
+    if not keys[K_r]:
+        delay = 0
+
+    if keys[K_KP1]:
+        gen = 1
+
+    if keys[K_KP0]:
+        gen = 0
 
     for y in range(len(liste)):             # On actualise l'affichage du labyrinthe
         for x in range(len(liste[y])):
@@ -60,6 +85,8 @@ while running:
             elif liste[y][x] == 5:
                 rect = pygame.Rect(x*10, y*10, 10, 10)
                 pygame.draw.rect(window, (255,255,0), rect)
+
+
 
 
     if endalgo == False:
@@ -104,6 +131,5 @@ while running:
        if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
 
            running = False
-
 
 pygame.quit()
