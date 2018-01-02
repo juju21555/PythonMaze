@@ -2,14 +2,16 @@
 from pygame.locals import *
 import random
 
+# Algorithme de Prim
+
 pygame.init()
 clock = pygame.time.Clock()
 
 xMax = 25
 yMax = 25
 
-directionX = {'N':0,'S':0,'E':1,'O':-1}
-directionY = {'N':1,'S':-1,'E':0,'O':0}
+dx = {'N':0,'S':0,'E':2,'O':-2}
+dy = {'N':2,'S':-2,'E':0,'O':0}
 
 running = True
 endalgo = False
@@ -18,35 +20,33 @@ space = False
 regenonce = True
 delay = 0
 
+listCell = []
+
 def update_size_screen(x, y, maze = None):
-    global xWindow, yWindow, window, labyrinthe, murs, lastCell, randCell
+    global xWindow, yWindow, window, murs, randCell
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
 
-    labyrinthe = [[0 for x in range(xMax)] for y in range(yMax)]
-
     murs = [[0 for x in range(2*xMax+1)] for y in range(2*yMax+1)]
-    for y in range(len(murs)-1):
-        for x in range(len(murs[y])-1):
-            if x % 2 != 0 and y % 2 != 0:
-                murs[y][x] = 1
-
-    randCell = ((random.randrange(xMax)), (random.randrange(yMax)))
-    lastCell = [randCell]
 
 def breakWall(x1,y1,x2,y2):
-    milieu = [ x1+x2+1, y1+y2+1 ]
-    murs[milieu[1]][milieu[0]] = 1
-
-def speWall(x1,y1,x2,y2):
-    milieu = [ x1+x2+1, y1+y2+1 ]
-    murs[milieu[1]][milieu[0]] = 4
+    milieu = [ int((x1+x2) /2), int((y1+y2) /2) ]
+    murs[milieu[1]][milieu[0]] = 2
 
 update_size_screen(xMax,yMax)
 
-(rcx, rcy) = randCell
-rcx, rcy = 2*rcx+1, 2*rcy+1
+(rx, ry) = ((2*random.randrange(xMax)+1), (2*random.randrange(yMax)+1))
+murs[ry][rx] = 2
+
+for d in ['N','S','O','E']:
+    nx = rx + dx[d]
+    ny = ry + dy[d]
+    if nx >= 0 and nx < 2*xMax+1 and ny >= 0 and ny < 2*yMax+1:
+        murs[ny][nx] = 1
+        listCell.append((nx, ny))
+
+(rcx, rcy) = (rx, ry)
 
 while running:
 
@@ -68,17 +68,17 @@ while running:
     if not keys[K_r]:
         delay = 0
 
-    for y in range(len(murs)):             # On actualise l'affichage du labyrinthe
+    for y in range(len(murs)):             # On actualise l'affichage du murs
         for x in range(len(murs[y])):
             if murs[y][x] == 0:
                 rect = pygame.Rect(x*10, y*10, 10, 10)
                 pygame.draw.rect(window, (0,0,0), rect)
 
-            elif murs[y][x] == 1:
+            elif murs[y][x] == 2:
                 rect = pygame.Rect(x*10, y*10, 10, 10)
                 pygame.draw.rect(window, (255,255,255), rect)
 
-            elif murs[y][x] == 4:
+            elif murs[y][x] == 1:
                 rect = pygame.Rect(x*10, y*10, 10, 10)
                 pygame.draw.rect(window, (128,0,128), rect)
 
@@ -88,34 +88,28 @@ while running:
 
     if keys[K_RIGHT] or space:
         if endalgo == False:
+            if listCell != []:
+                (rx, ry) = random.choice(listCell)
+                listCell.remove((rx, ry))
+                murs[ry][rx] = 2
+                voisinsVisite = []
+                for d in ['N','S','O','E']:
+                    nx, ny = rx + dx[d], ry + dy[d]
+                    if nx >= 0 and nx < 2*xMax+1 and ny >= 0 and ny < 2*yMax+1 and murs[ny][nx] == 2:
+                        voisinsVisite.append((nx, ny))
 
-            if lastCell != []:
-                (rx, ry) = lastCell[-1]
-                labyrinthe[ry][rx] = 1
-                lVoisins = []
-                for direction in ['N','S','O','E']:
-                    nx = rx + directionX[direction]
-                    ny = ry + directionY[direction]
-                    if nx >= 0 and nx < xMax and ny >= 0 and ny < yMax:
+                for d in ['N','S','O','E']:
+                    nx, ny = rx + dx[d], ry + dy[d]
+                    if nx >= 0 and nx < 2*xMax+1 and ny >= 0 and ny < 2*yMax+1 and murs[ny][nx] == 0:
+                        murs[ny][nx] = 1
+                        listCell.append((nx, ny))
 
-                        if labyrinthe[ny][nx] == 0:
-
-                            lVoisins.append(direction)
+                if len(voisinsVisite) > 0:
+                    (nx, ny) = random.choice(voisinsVisite)
+                    breakWall(nx,ny,rx,ry)
+                    murs[ny][nx] = 2
 
 
-                if len(lVoisins) > 0:
-                    var = random.choice(lVoisins)
-                    breakWall(rx, ry, (rx+directionX[var]), (ry+directionY[var]))
-                    rx, ry = rx + directionX[var], ry + directionY[var]
-                    lastCell.append((rx, ry))
-                else:
-                    (px, py) = lastCell[-1]
-                    if len(lastCell) > 1:
-                        (bx, by) = lastCell[-2]
-                        speWall(bx,by,px,py)
-                    px, py = 2*px+1, 2*py+1
-                    murs[py][px] = 4
-                    lastCell.pop()
             else:
                 endalgo = True
 

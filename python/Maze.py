@@ -3,8 +3,9 @@
 import pygame
 import csv
 from pygame.locals import *
-import mazeGen
-import mazeGen2
+import ExplorationExhaustive
+import FusionAleatoire
+import AlgorithmeDePrim
 import time
 
 # On initialise pygame et la police d'écriture
@@ -29,7 +30,7 @@ t0once, t1once, saveonce, regenonce, running = [True] * 5
 playerloc = None
 delay = 0
 nametxt = ''
-genTexts = ['Fusion aléatoire','Exploration exhaustive']
+genTexts = ['Fusion aléatoire','Exploration exhaustive','Algorithme de Prim']
 genText = 'Exploration exhaustive'
 gen = 1
 difficultTexts = ['Easy','Normal','Hard']
@@ -54,9 +55,11 @@ def maze_to_string(maze):
 def update_size_screen(x, y, maze = None):
     global liste, xWindow, yWindow, window, mazebase
     if gen == 0:
-        liste = mazeGen2.generate_labyrinthe(x,y)
+        liste = FusionAleatoire.generate_labyrinthe(x,y)
     elif gen == 1:
-        liste = mazeGen.generate_labyrinthe(x,y)
+        liste = ExplorationExhaustive.generate_labyrinthe(x,y)
+    elif gen == 2:
+        liste = AlgorithmeDePrim.generate_labyrinthe(x,y)
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )

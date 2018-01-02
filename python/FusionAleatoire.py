@@ -1,5 +1,7 @@
 ﻿import random
 
+# Fusion aléatoire
+
 def breakWall(x1,y1,x2,y2):
     milieu = [ x1+x2+1, y1+y2+1 ]
     murs[milieu[1]][milieu[0]] = 1

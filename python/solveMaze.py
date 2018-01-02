@@ -1,14 +1,15 @@
 ﻿import pygame
 from pygame.locals import *
-import mazeGen
-import mazeGen2
+import ExplorationExhaustive
+import FusionAleatoire
+import AlgorithmeDePrim
 import random
 import time
 
 pygame.init()
 clock = pygame.time.Clock()
 
-gen = 1
+gen = 2
 
 directionX = {'N':0,'S':0,'E':1,'O':-1}
 directionY = {'N':1,'S':-1,'E':0,'O':0}
@@ -22,14 +23,16 @@ delay = 0
 def update_size_screen(x, y, maze = None):
     global liste, xWindow, yWindow, window, mazebase
     if gen == 0:
-        liste = mazeGen2.generate_labyrinthe(x,y)
+        liste = FusionAleatoire.generate_labyrinthe(x,y)
     elif gen == 1:
-        liste = mazeGen.generate_labyrinthe(x,y)
+        liste = ExplorationExhaustive.generate_labyrinthe(x,y)
+    elif gen == 2:
+        liste = AlgorithmeDePrim.generate_labyrinthe(x,y)
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
 
-update_size_screen(60,30)
+update_size_screen(25,25)
 
 
 while running:
@@ -43,7 +46,7 @@ while running:
         delay += 1/60
         if delay > 1.5:
             if regenonce == True:
-                update_size_screen(60,30)
+                update_size_screen(25,25)
                 regenonce = False
                 endalgo = False
                 time.sleep(0.1)
@@ -53,11 +56,14 @@ while running:
     if not keys[K_r]:
         delay = 0
 
+    if keys[K_KP0]:
+        gen = 0
+
     if keys[K_KP1]:
         gen = 1
 
-    if keys[K_KP0]:
-        gen = 0
+    if keys[K_KP2]:
+        gen = 2
 
     for y in range(len(liste)):             # On actualise l'affichage du labyrinthe
         for x in range(len(liste[y])):
