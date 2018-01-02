@@ -13,11 +13,12 @@ Pour essayer le jeu, ouvrez le fichier 'Maze.py' il vous permettra de générer 
             
   -Algorithme de génération utilisé: 
   
-                                     Fusion Aléatoire
+             Fusion Aléatoire
   
-                                     Exploration Exhaustive
+             Exploration Exhaustive
                                      
-                                     Algorithme de Prim
+             Algorithme de Prim
+             
   -Avec ou sans tracer
 
 
@@ -37,7 +38,7 @@ Les fichiers AlgorithmeDePrim.py, ExplorationExhaustive.py, FusionAleatoire.py s
 
 Mais leur déclinaison 'Visualisation' permette de visualiser la génération du labyrinthe en temps réel
 
-Appuyer sur espace pour lancer la génération jusqu'à la fin ou maintener la flèche droite pour une génération pas à pas
+Appuyez sur espace pour lancer la génération jusqu'à la fin ou maintenez la flèche droite pour une génération pas à pas
 
 
 Le fichier solveMaze.py génère un labyrinthe et trouve le chemin de sortie en temps réel 
