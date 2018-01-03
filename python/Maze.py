@@ -90,9 +90,11 @@ def save_maze(maze, score):
     array = []
     date = time.asctime()
     with open('save.csv') as csvfile:
+
         fieldnames = ['maze','date','highscore','size','nickname','essais']
         reader = csv.DictReader(csvfile, delimiter=';')
         newrow = {'maze':str(maze), 'date':str(date), 'highscore':str(score)+'s', 'size':str(((xWindow-10)/20,(yWindow-10)/20)),'nickname':str(nametxt),'essais':'1'}
+
         for row in reader:
             if row['maze'] == 'maze':
                 continue
@@ -102,13 +104,20 @@ def save_maze(maze, score):
                 row['essais'] = str(int(row['essais']) + 1)
                 newrow = None
             array.append(row)
+
         if newrow is not None:
             array.append(newrow)
+
     with open('save.csv','w+') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
+        i = 0
+
         for row in array:
-            writer.writerow(row)
+            if i > len(array)-8:
+                writer.writerow(row)
+            i+=1
+
     csvfile.close()
 
 
@@ -130,6 +139,8 @@ def draw_csv():
         reader = r.reverse()
 
         for row in r:
+            if i > 7:
+                break
             rect = pygame.Rect(25, (60 * i), 460, 50)
             pygame.draw.rect(window, [128, 128, 0], rect)
 
@@ -145,6 +156,8 @@ def draw_csv():
 
             listreplay.append([row[0],row[3],rect])
             i+=1
+
+
 
     buttonPlay, buttonReplay = [None] * 2
 
@@ -418,7 +431,7 @@ while running:
                 update_size_screen(25,25)
 
 
-        if event.type == pygame.MOUSEBUTTONDOWN:                                    # On gère les actions avec la souris
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:              # On gère les actions avec la souris
 
             mouse_pos = pygame.mouse.get_pos()                                      # On récupère la position de la souris
 
