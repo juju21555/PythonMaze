@@ -125,6 +125,9 @@ while running:
            running = False
 
        if event.type == KEYDOWN and event.key == K_SPACE:
-           space = True
+        if space == False:
+            space = True
+        else:
+            space = False
 
 pygame.quit()

@@ -9,7 +9,7 @@ import time
 pygame.init()
 clock = pygame.time.Clock()
 
-gen = 2
+gen = 1
 
 directionX = {'N':0,'S':0,'E':1,'O':-1}
 directionY = {'N':1,'S':-1,'E':0,'O':0}

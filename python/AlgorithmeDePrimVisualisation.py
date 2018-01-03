@@ -20,33 +20,33 @@ space = False
 regenonce = True
 delay = 0
 
-listCell = []
-
 def update_size_screen(x, y, maze = None):
-    global xWindow, yWindow, window, murs, randCell
+    global xWindow, yWindow, window, murs, listCell, rcx, rcy, rx, ry
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
 
+    listCell = []
+
     murs = [[0 for x in range(2*xMax+1)] for y in range(2*yMax+1)]
+
+    (rx, ry) = ((2*random.randrange(xMax)+1), (2*random.randrange(yMax)+1))
+    murs[ry][rx] = 2
+
+    for d in ['N','S','O','E']:
+        nx = rx + dx[d]
+        ny = ry + dy[d]
+        if nx >= 0 and nx < 2*xMax+1 and ny >= 0 and ny < 2*yMax+1:
+            murs[ny][nx] = 1
+            listCell.append((nx, ny))
+
+    (rcx, rcy) = (rx, ry)
 
 def breakWall(x1,y1,x2,y2):
     milieu = [ int((x1+x2) /2), int((y1+y2) /2) ]
     murs[milieu[1]][milieu[0]] = 2
 
 update_size_screen(xMax,yMax)
-
-(rx, ry) = ((2*random.randrange(xMax)+1), (2*random.randrange(yMax)+1))
-murs[ry][rx] = 2
-
-for d in ['N','S','O','E']:
-    nx = rx + dx[d]
-    ny = ry + dy[d]
-    if nx >= 0 and nx < 2*xMax+1 and ny >= 0 and ny < 2*yMax+1:
-        murs[ny][nx] = 1
-        listCell.append((nx, ny))
-
-(rcx, rcy) = (rx, ry)
 
 while running:
 
@@ -123,6 +123,9 @@ while running:
            running = False
 
        if event.type == KEYDOWN and event.key == K_SPACE:
+        if space == False:
             space = True
+        else:
+            space = False
 
 pygame.quit()
