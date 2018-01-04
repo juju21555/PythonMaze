@@ -3,9 +3,10 @@
 import pygame
 import csv
 from pygame.locals import *
-import ExplorationExhaustive
-import FusionAleatoire
-import AlgorithmeDePrim
+from algorithmeGeneration import ExplorationExhaustive
+from algorithmeGeneration import FusionAleatoire
+from algorithmeGeneration import AlgorithmeDePrim
+from algorithmeGeneration import LabyrintheEntrelacee
 import time
 
 # On initialise pygame et la police d'écriture
@@ -30,7 +31,7 @@ t0once, t1once, saveonce, regenonce, running = [True] * 5
 playerloc = None
 delay = 0
 nametxt = ''
-genTexts = ['Fusion aléatoire','Exploration exhaustive','Algorithme de Prim']
+genTexts = ['Fusion aléatoire','Exploration exhaustive','Algorithme de Prim','Labyrinthe Entrelacée']
 genText = 'Exploration exhaustive'
 gen = 1
 difficultTexts = ['Easy','Normal','Hard']
@@ -60,6 +61,9 @@ def update_size_screen(x, y, maze = None):
         liste = ExplorationExhaustive.generate_labyrinthe(x,y)
     elif gen == 2:
         liste = AlgorithmeDePrim.generate_labyrinthe(x,y)
+    elif gen == 3:
+        liste = LabyrintheEntrelacee.generate_labyrinthe(x,y)
+
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
@@ -76,7 +80,7 @@ def string_to_maze(string):
     mazefin = []
     maze = []
     for i in string:
-        if i in ['0','1','2','3']:
+        if i in ['0','1','2','3','5','6','7','8']:
             maze.append(int(i))
         if i == ',':
             mazefin.append(maze)
@@ -207,6 +211,9 @@ def move_up():
             liste[y-1][x] = 2
         elif liste[y-1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
+        elif liste[y-1][x] == 6:
+            liste[y][x] = 4
+            liste[y-4][x] = 2
 
 # Fonction pour se déplacer en bas
 
@@ -219,6 +226,9 @@ def move_down():
             liste[y+1][x] = 2
         elif liste[y+1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
+        elif liste[y+1][x] == 5:
+            liste[y][x] = 4
+            liste[y+4][x] = 2
 
 # Fonction pour se déplacer à droite
 
@@ -231,6 +241,9 @@ def move_right():
             liste[y][x+1] = 2
         elif liste[y][x+1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
+        elif liste[y][x+1] == 7:
+            liste[y][x] = 4
+            liste[y][x+4] = 2
 
 # Fonction pour se déplacer à gauche
 
@@ -243,6 +256,9 @@ def move_left():
             liste[y][x-1] = 2
         elif liste[y][x-1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
+        elif liste[y][x-1] == 8:
+            liste[y][x] = 4
+            liste[y][x-4] = 2
 
 # On lance une boucle qui modifiera l'affichage pygame
 
@@ -334,7 +350,15 @@ while running:
 
         for y in range(len(liste)):             # On actualise l'affichage du labyrinthe
             for x in range(len(liste[y])):
-                if liste[y][x] == 2:
+                if liste[y][x] == 0:
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
+
+                elif liste[y][x] == 1 or (liste[y][x] == 4 and tracer == False):
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (255,255,255), rect)
+
+                elif liste[y][x] == 2:
                     playerloc = (x, y)
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (0,128,0), rect)
@@ -343,17 +367,25 @@ while running:
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (255,0,0), rect)
 
-                elif liste[y][x] == 0:
-                    rect = pygame.Rect(x*10, y*10, 10, 10)
-                    pygame.draw.rect(window, (0,0,0), rect)
-
-                elif liste[y][x] == 1 or (liste[y][x] == 4 and tracer == False):
-                    rect = pygame.Rect(x*10, y*10, 10, 10)
-                    pygame.draw.rect(window, (255,255,255), rect)
-
                 elif liste[y][x] == 4 and tracer == True:
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (128,0,128), rect)
+
+                elif liste[y][x] == 5:
+                    rect = pygame.Rect(x*10, y*10+8, 10, 2)
+                    pygame.draw.rect(window, (0,0,0), rect)
+
+                elif liste[y][x] == 6:
+                    rect = pygame.Rect(x*10, y*10, 10, 2)
+                    pygame.draw.rect(window, (0,0,0), rect)
+
+                elif liste[y][x] == 7:
+                    rect = pygame.Rect(x*10+8, y*10, 2, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
+
+                elif liste[y][x] == 8:
+                    rect = pygame.Rect(x*10, y*10, 2, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
 
 
     # Fonction pour génerer un nouveau labyrinthe en maintenant la touche R
