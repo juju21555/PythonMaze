@@ -64,15 +64,16 @@ def gen_new_maze(x, y, maze = None):
     elif gen == 3:
         liste = LabyrintheEntrelacee.generate_labyrinthe(x,y)
 
-    update_size_screen(x, y)
+    update_size_screen(x, y, True)
     if maze is not None:
         mazebase = maze
     else:
         mazebase = maze_to_string(liste)
 
-def update_size_screen(x, y):
+def update_size_screen(x, y,t = False):
     global xWindow, yWindow, window, xMax, yMax
-    xMax, yMax = 2*x+1, 2*y+1
+    if t == True:
+        xMax, yMax = 2*x+1, 2*y+1
     xWindow = x*20+10
     yWindow = y*20+10
     window = pygame.display.set_mode( (xWindow, yWindow) )
