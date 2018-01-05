@@ -11,6 +11,8 @@ Pour essayer le jeu, ouvrez le fichier 'Maze.py' il vous permettra de générer 
             
             'Hard' : 60 * 30
             
+             'Z-Hard' : 60 * 30 en se déplaçant dans un rayon de 10 * 10
+            
   -Algorithme de génération utilisé: 
   
              Fusion Aléatoire
