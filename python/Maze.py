@@ -19,7 +19,7 @@ font1 = pygame.font.SysFont('Comic Sans MS', 18)
 
 # On initialise les listes
 
-mazes, listreplay, mazes, texts = [[]] * 4
+mazes, listreplay, mazes, texts, buff = [[]] * 5
 
 # On initialise les variables booléennes
 
@@ -34,10 +34,10 @@ nametxt = ''
 genTexts = ['Fusion aléatoire','Exploration exhaustive','Algorithme de Prim','Labyrinthe Entrelacée']
 genText = 'Exploration exhaustive'
 gen = 1
-difficultTexts = ['Easy','Normal','Hard']
+difficultTexts = ['Easy','Normal','Hard','Z-Hard']
 difficultText = 'Normal'
 difficult = 1
-sizeDiff = [(10,10),(25,25),(60,30)]
+sizeDiff = [(10,10),(25,25),(60,30),(10,10)]
 xDiff, yDiff = 25,25
 colorTrB = (255, 0, 0)
 
@@ -53,8 +53,8 @@ def maze_to_string(maze):
 
 # On définit la taille de l'écran
 
-def update_size_screen(x, y, maze = None):
-    global liste, xWindow, yWindow, window, mazebase
+def gen_new_maze(x, y, maze = None):
+    global liste, mazebase
     if gen == 0:
         liste = FusionAleatoire.generate_labyrinthe(x,y)
     elif gen == 1:
@@ -64,13 +64,18 @@ def update_size_screen(x, y, maze = None):
     elif gen == 3:
         liste = LabyrintheEntrelacee.generate_labyrinthe(x,y)
 
-    xWindow = x*20+10
-    yWindow = y*20+10
-    window = pygame.display.set_mode( (xWindow, yWindow) )
+    update_size_screen(x, y)
     if maze is not None:
         mazebase = maze
     else:
         mazebase = maze_to_string(liste)
+
+def update_size_screen(x, y):
+    global xWindow, yWindow, window, xMax, yMax
+    xMax, yMax = 2*x+1, 2*y+1
+    xWindow = x*20+10
+    yWindow = y*20+10
+    window = pygame.display.set_mode( (xWindow, yWindow) )
 
 update_size_screen(25,25)
 
@@ -165,6 +170,34 @@ def draw_csv():
 
     buttonPlay, buttonReplay = [None] * 2
 
+# Fonction qui réduit le labyrinthe (pour le mode Z-Hard)
+
+def var(v):
+    if v > 10:
+        return 10, 11
+    if v <= 10:
+        return 10-(10-v), 11+(10-v)
+
+def reduce_maze(maze):
+
+    for y in range(len(maze)):
+        for x in range(len(maze[y])):
+            if maze[y][x] == 2:
+                (ax, ay) = (x, y)
+
+    newmaze = []
+    xm, xp = var(ax)
+    ym, yp = var(ay)
+    for y in range(len(maze)):
+        if y >= ay-ym and y < ay+yp:
+            row = []
+            for x in range(len(maze[y])):
+                if x >= ax-xm and x < ax+xp:
+                    row.append(maze[y][x])
+            newmaze.append(row)
+    return newmaze, (ax, ay)
+
+
 # Fonction qui définit la difficulté du jeu
 
 def set_difficult(i):
@@ -202,8 +235,7 @@ def set_gen(i):
 
 # Fonction pour se déplacer en haut
 
-def move_up():
-    global liste
+def move_up(liste):
     global finish
     if y-1 >= 0:
         if liste[y-1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
@@ -217,10 +249,9 @@ def move_up():
 
 # Fonction pour se déplacer en bas
 
-def move_down():
-    global liste
+def move_down(liste):
     global finish
-    if y+1 < yWindow / 10:
+    if y+1 < yMax:
         if liste[y+1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 4
             liste[y+1][x] = 2
@@ -232,10 +263,9 @@ def move_down():
 
 # Fonction pour se déplacer à droite
 
-def move_right():
-    global liste
+def move_right(liste):
     global finish
-    if x+1 < xWindow / 10:
+    if x+1 < xMax:
         if liste[y][x+1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
             liste[y][x] = 4
             liste[y][x+1] = 2
@@ -247,8 +277,7 @@ def move_right():
 
 # Fonction pour se déplacer à gauche
 
-def move_left():
-    global liste
+def move_left(liste):
     global finish
     if x-1 >= 0:
         if liste[y][x-1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
@@ -359,7 +388,8 @@ while running:
                     pygame.draw.rect(window, (255,255,255), rect)
 
                 elif liste[y][x] == 2:
-                    playerloc = (x, y)
+                    if difficult != 3:
+                        playerloc = (x, y)
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (0,128,0), rect)
 
@@ -396,7 +426,8 @@ while running:
             delay += 1/60
             if delay > 1.5:
                 if regenonce == True:
-                    update_size_screen( int((xWindow-10)/20), int((yWindow-10)/20) )
+                    gen_new_maze( int((xWindow-10)/20), int((yWindow-10)/20) )
+                    buff = liste
                     t0 = time.monotonic()
                     regenonce = False
                 regenonce = True
@@ -445,18 +476,28 @@ while running:
                 elif len(nametxt) < 9:
                     nametxt = nametxt + event.dict['unicode']
 
+            if difficult == 3:
+                liste, playerloc = reduce_maze(buff)
+                e = buff
+
+            else:
+                e = liste
+
             if playerloc is not None:                                               # On déplace le joueur avec les touches directionnels
                 if event.key == K_UP:
-                    move_up()
+                    move_up(e)
 
                 if event.key == K_DOWN:
-                    move_down()
+                    move_down(e)
 
                 if event.key == K_RIGHT:
-                    move_right()
+                    move_right(e)
 
                 if event.key == K_LEFT:
-                    move_left()
+                    move_left(e)
+
+            if difficult == 3:
+                liste, playerloc = reduce_maze(buff)
 
             if event.key == K_b:                                                    # Touche B -> Touche Retour
                 play, replay, settings, finish, tracer = [False] * 5
@@ -472,7 +513,13 @@ while running:
                     set_difficult(-1)
 
                 if buttonStart.collidepoint(mouse_pos):
-                    update_size_screen(xDiff,yDiff)
+                    if difficult != 3:
+                        gen_new_maze(xDiff,yDiff)
+                    if difficult == 3:
+                        gen_new_maze(60,30)
+                        buff = liste
+                        liste, playerloc = reduce_maze(buff)
+                        update_size_screen(10,10)
                     play = True
                     settings = False
                     nametxt = ''
@@ -502,7 +549,7 @@ while running:
                         size = size.split(',')
                         x, y = int( float( size[0].replace('(','') ) ), int( float( size[1].replace(')','') ) )
                         mazebase = listreplay[i][0]
-                        update_size_screen(x, y, mazebase)
+                        update_size_screen(x, y)
                         liste = string_to_maze(mazebase)
                         play, blockR, saveonce, t0once, t1once = [True] * 5
                         replay = False
