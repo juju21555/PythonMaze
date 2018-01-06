@@ -552,6 +552,11 @@ while running:
                         mazebase = listreplay[i][0]
                         update_size_screen(x, y)
                         liste = string_to_maze(mazebase)
+                        if len(liste) == 61 and x == 10:
+                            difficult = 3
+                            buff = liste
+                            liste, playerloc = reduce_maze(buff)
+                            xMax, yMax = 61, 121
                         play, blockR, saveonce, t0once, t1once = [True] * 5
                         replay = False
 
