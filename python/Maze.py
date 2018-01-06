@@ -28,6 +28,7 @@ t0once, t1once, saveonce, regenonce, running = [True] * 5
 
 # Autres variables
 
+mazebase = None
 playerloc = None
 delay = 0
 nametxt = ''
@@ -40,6 +41,8 @@ difficult = 1
 sizeDiff = [(10,10),(25,25),(60,30),(10,10)]
 xDiff, yDiff = 25,25
 colorTrB = (255, 0, 0)
+dX = {'N':0,'S':0,'E':1,'O':-1}
+dY = {'N':-1,'S':1,'E':0,'O':0}
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
@@ -64,11 +67,14 @@ def gen_new_maze(x, y, maze = None):
     elif gen == 3:
         liste = LabyrintheEntrelacee.generate_labyrinthe(x,y)
 
+    liste = maze_to_string(liste)
     update_size_screen(x, y, True)
+
     if maze is not None:
         mazebase = maze
-    else:
-        mazebase = maze_to_string(liste)
+
+    if maze is None and mazebase is None:
+        mazebase = liste.copy()
 
 def update_size_screen(x, y,t = False):
     global xWindow, yWindow, window, xMax, yMax
@@ -80,19 +86,6 @@ def update_size_screen(x, y,t = False):
 
 update_size_screen(25,25)
 
-# Fonction qui transforme les labyrinthes compactés en labyrinthe pouvant être utilisé par le programme
-
-def string_to_maze(string):
-    mazefin = []
-    maze = []
-    for i in string:
-        if i in ['0','1','2','3','5','6','7','8']:
-            maze.append(int(i))
-        if i == ',':
-            mazefin.append(maze)
-            maze = []
-    mazefin.append(maze)
-    return mazefin
 
 # Fonction qui sauvegarde le labyrinthe compacté dans le fichier 'save.csv'
 
@@ -167,8 +160,6 @@ def draw_csv():
             listreplay.append([row[0],row[3],rect])
             i+=1
 
-
-
     buttonPlay, buttonReplay = [None] * 2
 
 # Fonction qui réduit le labyrinthe (pour le mode Z-Hard)
@@ -183,7 +174,7 @@ def reduce_maze(maze):
 
     for y in range(len(maze)):
         for x in range(len(maze[y])):
-            if maze[y][x] == 2:
+            if maze[y][x] in ['2','9','A','B','C','D']:
                 (ax, ay) = (x, y)
 
     newmaze = []
@@ -191,12 +182,29 @@ def reduce_maze(maze):
     ym, yp = var(ay)
     for y in range(len(maze)):
         if y >= ay-ym and y < ay+yp:
-            row = []
+            row = ''
             for x in range(len(maze[y])):
                 if x >= ax-xm and x < ax+xp:
-                    row.append(maze[y][x])
+                    row += maze[y][x]
             newmaze.append(row)
     return newmaze, (ax, ay)
+
+
+def string_to_maze(string):
+    mazefin = []
+    maze = ''
+
+    for i in string:
+        if i in ['0','1','2','3','5','6','7','8']:
+            maze += i
+        if i == '4':
+            maze += '1'
+        if i == ',':
+            mazefin.append(maze)
+            maze = ''
+    mazefin.append(maze)
+    return mazefin
+
 
 
 # Fonction qui définit la difficulté du jeu
@@ -233,62 +241,40 @@ def set_gen(i):
         gen += i
         genText = genTexts[gen]
 
+# Fonction pour se déplacer
 
-# Fonction pour se déplacer en haut
-
-def move_up(liste):
+def move(way,liste):
     global finish
-    if y-1 >= 0:
-        if liste[y-1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 4
-            liste[y-1][x] = 2
-        elif liste[y-1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
+
+    if 0 <= (x + dX[way]) < xMax and 0 <= (y + dY[way]) < yMax:
+        fx, fy = x + dX[way], y + dY[way]
+
+        if liste[fy][fx] in ['1','4'] and liste[y][x] == '2':          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
+            liste[y] = liste[y][:x] + '4' + liste[y][(x+1):]
+            liste[fy] = liste[fy][:fx] + '2' + liste[fy][(fx+1):]
+
+        elif liste[fy][fx] == '3':        #Si la futur position est l'arrivée on déclare le jeu comme finis
             finish = True
-        elif liste[y-1][x] == 6:
-            liste[y][x] = 4
-            liste[y-4][x] = 2
 
-# Fonction pour se déplacer en bas
+        elif liste[fy][fx] in ['5','6','7','8'] and way == ['S','N','E','O'][['5','6','7','8'].index(liste[fy][fx])]:
+            liste[y] = liste[y][:x] + '4' + liste[y][(x+1):]
+            liste[fy] = liste[fy][:fx] + hex(int(liste[fy][fx])+4).replace('0x','').upper() + liste[fy][(fx+1):]
 
-def move_down(liste):
-    global finish
-    if y+1 < yMax:
-        if liste[y+1][x] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 4
-            liste[y+1][x] = 2
-        elif liste[y+1][x] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
-            finish = True
-        elif liste[y+1][x] == 5:
-            liste[y][x] = 4
-            liste[y+4][x] = 2
+        elif liste[y][x] in ['9','A','B','C'] and liste[fy][fx] in ['1','4'] and way == ['S','N','E','O'][['9','A','B','C'].index(liste[y][x])]:
+            liste[y] = liste[y][:x] + ['5','6','7','8'][['S','N','E','O'].index(way)] + liste[y][(x+1):]
+            liste[fy] = liste[fy][:fx] + 'D' + liste[fy][(fx+1):]
 
-# Fonction pour se déplacer à droite
+        elif liste[y][x] in ['9','A','B','C'] and liste[fy][fx] in ['1','4'] and way == ['N','S','O','E'][['9','A','B','C'].index(liste[y][x])]:
+            liste[y] = liste[y][:x] + ['5','6','7','8'][['N','S','O','E'].index(way)] + liste[y][(x+1):]
+            liste[fy] = liste[fy][:fx] + '2' + liste[fy][(fx+1):]
 
-def move_right(liste):
-    global finish
-    if x+1 < xMax:
-        if liste[y][x+1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 4
-            liste[y][x+1] = 2
-        elif liste[y][x+1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
-            finish = True
-        elif liste[y][x+1] == 7:
-            liste[y][x] = 4
-            liste[y][x+4] = 2
+        elif liste[fy][fx] in ['5','6','7','8'] and liste[y][x] == 'D':
+            liste[y] = liste[y][:x] + '4' + liste[y][(x+1):]
+            liste[fy] = liste[fy][:fx] + ['9','A','B','C'][['N','S','O','E'].index(way)] + liste[fy][(fx+1):]
 
-# Fonction pour se déplacer à gauche
+    return liste
 
-def move_left(liste):
-    global finish
-    if x-1 >= 0:
-        if liste[y][x-1] in [1,4]:          #On vérifie si la futur position est vide (au quel cas on pourra se déplacer)
-            liste[y][x] = 4
-            liste[y][x-1] = 2
-        elif liste[y][x-1] == 3:        #Si la futur position est l'arrivée on déclare le jeu comme finis
-            finish = True
-        elif liste[y][x-1] == 8:
-            liste[y][x] = 4
-            liste[y][x-4] = 2
+
 
 # On lance une boucle qui modifiera l'affichage pygame
 
@@ -380,43 +366,81 @@ while running:
 
         for y in range(len(liste)):             # On actualise l'affichage du labyrinthe
             for x in range(len(liste[y])):
-                if liste[y][x] == 0:
+                if liste[y][x] == '0':
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (0,0,0), rect)
 
-                elif liste[y][x] == 1 or (liste[y][x] == 4 and tracer == False):
+                elif liste[y][x] == '1' or (liste[y][x] == '4' and tracer == False):
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (255,255,255), rect)
 
-                elif liste[y][x] == 2:
+                elif liste[y][x] == '2':
                     if difficult != 3:
                         playerloc = (x, y)
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (0,128,0), rect)
 
-                elif liste[y][x] == 3:
+                elif liste[y][x] == '3':
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (255,0,0), rect)
 
-                elif liste[y][x] == 4 and tracer == True:
+                elif liste[y][x] == '4' and tracer == True:
                     rect = pygame.Rect(x*10, y*10, 10, 10)
                     pygame.draw.rect(window, (128,0,128), rect)
 
-                elif liste[y][x] == 5:
+                elif liste[y][x] == '5':
                     rect = pygame.Rect(x*10, y*10+8, 10, 2)
                     pygame.draw.rect(window, (0,0,0), rect)
 
-                elif liste[y][x] == 6:
+                elif liste[y][x] == '6':
                     rect = pygame.Rect(x*10, y*10, 10, 2)
                     pygame.draw.rect(window, (0,0,0), rect)
 
-                elif liste[y][x] == 7:
+                elif liste[y][x] == '7':
                     rect = pygame.Rect(x*10+8, y*10, 2, 10)
                     pygame.draw.rect(window, (0,0,0), rect)
 
-                elif liste[y][x] == 8:
+                elif liste[y][x] == '8':
                     rect = pygame.Rect(x*10, y*10, 2, 10)
                     pygame.draw.rect(window, (0,0,0), rect)
+
+                elif liste[y][x] == '9':
+                    if difficult != 3:
+                        playerloc = (x, y)
+                    rect = pygame.Rect(x*10, y*10+8, 10, 2)
+                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10, 10, 8)
+                    pygame.draw.rect(window, (0,128,0), rect)
+
+                elif liste[y][x] == 'A':
+                    if difficult != 3:
+                        playerloc = (x, y)
+                    rect = pygame.Rect(x*10, y*10, 10, 2)
+                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10+2, 10, 8)
+                    pygame.draw.rect(window, (0,128,0), rect)
+
+                elif liste[y][x] == 'B':
+                    if difficult != 3:
+                        playerloc = (x, y)
+                    rect = pygame.Rect(x*10+8, y*10, 2, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10, 8, 10)
+                    pygame.draw.rect(window, (0,128,0), rect)
+
+                elif liste[y][x] == 'C':
+                    if difficult != 3:
+                        playerloc = (x, y)
+                    rect = pygame.Rect(x*10, y*10, 2, 10)
+                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10+2, y*10, 8, 10)
+                    pygame.draw.rect(window, (0,128,0), rect)
+
+                elif liste[y][x] == 'D':
+                    if difficult != 3:
+                        playerloc = (x, y)
+                    rect = pygame.Rect(x*10, y*10, 10, 10)
+                    pygame.draw.rect(window, (0,255,0), rect)
 
 
     # Fonction pour génerer un nouveau labyrinthe en maintenant la touche R
@@ -455,7 +479,7 @@ while running:
 
         window.fill(0)                                                          # On efface l'affichage sur l'écran
         play, replay, finish, settings = [False] * 4                     # On remet les variables à faux
-        update_size_screen(25,25,mazebase)                                      # On remet la taille de l'écran à la normale
+        update_size_screen(25,25)                                      # On remet la taille de l'écran à la normale
 
 
     pygame.display.flip()                       # On affiche les textures mis en mémoire
@@ -469,6 +493,7 @@ while running:
 
         if event.type == QUIT or(event.type == KEYUP and event.key == K_ESCAPE):    # On arrête pygame avec la touce echap
            running = False
+           break
 
         if event.type == KEYDOWN:
             if settings == True:                                                       # Ecrire le nom du joueur
@@ -477,28 +502,34 @@ while running:
                 elif len(nametxt) < 9:
                     nametxt = nametxt + event.dict['unicode']
 
-            if difficult == 3:
-                liste, playerloc = reduce_maze(buff)
-                e = buff
-
-            else:
-                e = liste
-
             if playerloc is not None:                                               # On déplace le joueur avec les touches directionnels
                 if event.key == K_UP:
-                    move_up(e)
+                    if difficult != 3:
+                        liste = move('N',liste)
+                    else:
+                        buff = move('N',buff)
+                        liste, playerloc = reduce_maze(buff)
 
                 if event.key == K_DOWN:
-                    move_down(e)
+                    if difficult != 3:
+                        liste = move('S',liste)
+                    else:
+                        buff = move('S',buff)
+                        liste, playerloc = reduce_maze(buff)
 
                 if event.key == K_RIGHT:
-                    move_right(e)
+                    if difficult != 3:
+                        liste = move('E',liste)
+                    else:
+                        buff = move('E',buff)
+                        liste, playerloc = reduce_maze(buff)
 
                 if event.key == K_LEFT:
-                    move_left(e)
-
-            if difficult == 3:
-                liste, playerloc = reduce_maze(buff)
+                    if difficult != 3:
+                        liste = move('O',liste)
+                    else:
+                        buff = move('O',buff)
+                        liste, playerloc = reduce_maze(buff)
 
             if event.key == K_b:                                                    # Touche B -> Touche Retour
                 play, replay, settings, finish, tracer = [False] * 5
@@ -549,14 +580,14 @@ while running:
                         size = listreplay[i][1]
                         size = size.split(',')
                         x, y = int( float( size[0].replace('(','') ) ), int( float( size[1].replace(')','') ) )
-                        mazebase = listreplay[i][0]
-                        update_size_screen(x, y)
-                        liste = string_to_maze(mazebase)
+                        mazebase = string_to_maze(listreplay[i][0])
+                        update_size_screen(x, y, True)
+                        liste = mazebase.copy()
                         if len(liste) == 61 and x == 10:
                             difficult = 3
-                            buff = liste
+                            buff = liste.copy()
                             liste, playerloc = reduce_maze(buff)
-                            xMax, yMax = 61, 121
+                            xMax, yMax = 121, 61
                         play, blockR, saveonce, t0once, t1once = [True] * 5
                         replay = False
 
@@ -568,6 +599,7 @@ while running:
 
                 if buttonReplay.collidepoint(mouse_pos) and replay == False:            # Si on est dans le menu et qu'on clique sur le bouton replay on met la variable replay à Vrai
                     replay = True
+
 
 # Quand on quitte la boucle on éteint pygame
 
