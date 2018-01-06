@@ -43,6 +43,7 @@ xDiff, yDiff = 25,25
 colorTrB = (255, 0, 0)
 dX = {'N':0,'S':0,'E':1,'O':-1}
 dY = {'N':-1,'S':1,'E':0,'O':0}
+colorFond = (255,255,255)
 
 # Fonction qui transforme un labyrinthe en une chaine de caractère pour le sauvegarder
 
@@ -282,7 +283,7 @@ while running:
 
     # On définit le taux de rafraichissement de l'affichage sur 60 Hz et on remplit le fond d'une couleur blanche
     clock.tick(60)
-    window.fill((255,255,255))
+    window.fill(colorFond)
 
     # De base, on se trouve sur le menu avec deux choix : Jouer un nouveau niveau ou rejouer un ancien pour battre son score
 
@@ -367,8 +368,7 @@ while running:
         for y in range(len(liste)):             # On actualise l'affichage du labyrinthe
             for x in range(len(liste[y])):
                 if liste[y][x] == '0':
-                    rect = pygame.Rect(x*10, y*10, 10, 10)
-                    pygame.draw.rect(window, (0,0,0), rect)
+                    continue
 
                 elif liste[y][x] == '1' or (liste[y][x] == '4' and tracer == False):
                     rect = pygame.Rect(x*10, y*10, 10, 10)
@@ -389,20 +389,20 @@ while running:
                     pygame.draw.rect(window, (128,0,128), rect)
 
                 elif liste[y][x] == '5':
-                    rect = pygame.Rect(x*10, y*10+8, 10, 2)
-                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10, 10, 8)
+                    pygame.draw.rect(window, (255,255,255), rect)
 
                 elif liste[y][x] == '6':
-                    rect = pygame.Rect(x*10, y*10, 10, 2)
-                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10+2, 10, 8)
+                    pygame.draw.rect(window, (255,255,255), rect)
 
                 elif liste[y][x] == '7':
-                    rect = pygame.Rect(x*10+8, y*10, 2, 10)
-                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10, y*10, 8, 10)
+                    pygame.draw.rect(window, (255,255,255), rect)
 
                 elif liste[y][x] == '8':
-                    rect = pygame.Rect(x*10, y*10, 2, 10)
-                    pygame.draw.rect(window, (0,0,0), rect)
+                    rect = pygame.Rect(x*10+2, y*10, 8, 10)
+                    pygame.draw.rect(window, (255,255,255), rect)
 
                 elif liste[y][x] == '9':
                     if difficult != 3:
@@ -451,8 +451,13 @@ while running:
             delay += 1/60
             if delay > 1.5:
                 if regenonce == True:
-                    gen_new_maze( int((xWindow-10)/20), int((yWindow-10)/20) )
-                    buff = liste
+                    if difficult == 3:
+                        gen_new_maze(60,30)
+                        update_size_screen(10,10)
+                        buff = liste.copy()
+                        liste, playerloc = reduce_maze(buff)
+                    else:
+                        gen_new_maze( int((xWindow-10)/20), int((yWindow-10)/20) )
                     t0 = time.monotonic()
                     regenonce = False
                 regenonce = True
@@ -534,6 +539,7 @@ while running:
             if event.key == K_b:                                                    # Touche B -> Touche Retour
                 play, replay, settings, finish, tracer = [False] * 5
                 update_size_screen(25,25)
+                colorFond = (255,255,255)
 
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:              # On gère les actions avec la souris
@@ -555,6 +561,7 @@ while running:
                     play = True
                     settings = False
                     nametxt = ''
+                    colorFond = (0,0,0)
 
                 if buttonSwitchR.collidepoint(mouse_pos):
                     set_difficult(1)
