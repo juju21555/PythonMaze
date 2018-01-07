@@ -482,7 +482,7 @@ while running:
             save_maze(mazebase, t)
             saveonce = False
 
-        window.fill(0)                                                          # On efface l'affichage sur l'écran
+        colorFond = (255,255,255)
         play, replay, finish, settings = [False] * 4                     # On remet les variables à faux
         update_size_screen(25,25)                                      # On remet la taille de l'écran à la normale
 
@@ -539,6 +539,7 @@ while running:
             if event.key == K_b:                                                    # Touche B -> Touche Retour
                 play, replay, settings, finish, tracer = [False] * 5
                 update_size_screen(25,25)
+                liste, buff, mazebase = [None] * 3
                 colorFond = (255,255,255)
 
 
@@ -595,6 +596,9 @@ while running:
                             buff = liste.copy()
                             liste, playerloc = reduce_maze(buff)
                             xMax, yMax = 121, 61
+                        else:
+                            difficult = sizeDiff.index((x, y))
+                        colorFond = (0,0,0)
                         play, blockR, saveonce, t0once, t1once = [True] * 5
                         replay = False
 
